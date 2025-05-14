@@ -26,19 +26,25 @@ function logToFile(message) {
 }
 
 // Function to recreate PayFast signature (no passphrase)
-const generateSignature = (data) => {
+const generateSignature = (data, passPhrase = null) => {
   let pfOutput = "";
 
   for (let key in data) {
-    if (data.hasOwnProperty(key)) {
-      if (data[key] !== "") {
-        pfOutput += `${key}=${encodeURIComponent(data[key].trim()).replace(/%20/g, "+")}&`;
-      }
+    if (
+      data.hasOwnProperty(key) &&
+      key !== "signature" && // 🚫 Skip the signature field
+      data[key] !== ""
+    ) {
+      pfOutput += `${key}=${encodeURIComponent(data[key].trim()).replace(/%20/g, "+")}&`;
     }
   }
 
-  // Remove last ampersand
+  // Remove the trailing ampersand
   let getString = pfOutput.slice(0, -1);
+
+  if (passPhrase !== null) {
+    getString += `&passphrase=${encodeURIComponent(passPhrase.trim()).replace(/%20/g, "+")}`;
+  }
 
   console.log("Signature string:", getString);
   return crypto.createHash("md5").update(getString).digest("hex");
