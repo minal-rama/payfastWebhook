@@ -7,12 +7,6 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const PAYFAST_ENV = process.env.PAYFAST_ENV || 'production';
-
-// Load passphrase for signature validation
-const PASSPHRASE = PAYFAST_ENV === 'sandbox'
-  ? process.env.PAYFAST_PASSPHRASE_SANDBOX
-  : process.env.PAYFAST_PASSPHRASE_PROD;
 
 // Middleware to log every request
 app.use((req, res, next) => {
@@ -31,13 +25,12 @@ function logToFile(message) {
   fs.appendFileSync(logPath, logEntry);
 }
 
-// Function to recreate PayFast signature
+// Function to recreate PayFast signature (no passphrase)
 function generateSignature(data) {
   const keys = Object.keys(data).filter(k => k !== 'signature').sort();
   const str = keys.map(key => `${key}=${decodeURIComponent(data[key])}`).join('&');
-  const fullString = str + (PASSPHRASE ? `&passphrase=${PASSPHRASE}` : '');
-  console.log('Signature string:', fullString);
-  return crypto.createHash('md5').update(fullString).digest('hex');
+  console.log('Signature string:', str); // Logging the raw signature string
+  return crypto.createHash('md5').update(str).digest('hex');
 }
 
 // Main webhook handler
