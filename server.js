@@ -26,29 +26,21 @@ function logToFile(message) {
 }
 
 // Function to recreate PayFast signature (no passphrase)
-const generateSignature = (data, passPhrase = null) => {
-  let pfOutput = "";
+function generateSignature(data, passphrase = null) {
+  // Step 1: Sort parameters alphabetically
+  const keys = Object.keys(data).filter(key => key !== 'signature').sort();
 
-  for (let key in data) {
-    if (
-      data.hasOwnProperty(key) &&
-      key !== "signature" && // 🚫 Skip the signature field
-      data[key] !== ""
-    ) {
-      pfOutput += `${key}=${encodeURIComponent(data[key].trim()).replace(/%20/g, "+")}&`;
-    }
-  }
+  // Step 2: Concatenate parameters
+  const paramString = keys.map(key => {
+    return `${key}=${encodeURIComponent(data[key] || '').replace(/%20/g, '%20')}`;
+  }).join('&');
 
-  // Remove the trailing ampersand
-  let getString = pfOutput.slice(0, -1);
+  // Step 3: Append passphrase if provided
+  const finalString = passphrase ? `${paramString}&passphrase=${encodeURIComponent(passphrase)}` : paramString;
 
-  if (passPhrase !== null) {
-    getString += `&passphrase=${encodeURIComponent(passPhrase.trim()).replace(/%20/g, "+")}`;
-  }
-
-  console.log("Signature string:", getString);
-  return crypto.createHash("md5").update(getString).digest("hex");
-};
+  // Step 4: Generate MD5 hash
+  return crypto.createHash('md5').update(finalString).digest('hex');
+}
 
 // Main webhook handler
 app.post('/payfast-notify', async (req, res) => {
