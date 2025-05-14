@@ -27,16 +27,26 @@ function logToFile(message) {
 
 // Function to recreate PayFast signature (no passphrase)
 function generateSignature(data) {
+  // Step 1: Sort the keys alphabetically
   const keys = Object.keys(data)
-    .filter(k => k !== 'signature')
-    .sort();
+    .filter(key => key !== 'signature')  // Exclude the signature field
+    .sort();  // Sort the keys alphabetically
 
-  const str = keys
-    .map(key => `${key}=${encodeURIComponent(data[key] || '')}`)
-    .join('&');
+  // Step 2: Build the parameter string
+  const paramPairs = keys.map(key => {
+    const value = data[key];
+    if (value) {
+      return `${key}=${encodeURIComponent(value.trim())}`;
+    }
+    return '';
+  }).filter(pair => pair !== '');  // Filter out any empty pairs
 
-  console.log('Signature string:', str);
+  // Join the parameters with "&"
+  const str = paramPairs.join('&');
 
+  console.log('Signature string:', str);  // Log the string to verify it
+
+  // Step 3: Return the MD5 hash of the concatenated string
   return crypto.createHash('md5').update(str).digest('hex');
 }
 
